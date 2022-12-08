@@ -1,47 +1,30 @@
-package main;
+import java.util.Scanner;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class Main {
-    static byte[][] STARTING_BOARD = {
-    		{0,2,0,2,0,2,0,2},
-    		{2,0,2,0,2,0,2,0},
-    		{0,2,0,2,0,2,0,2},
-    		{0,0,0,0,0,0,0,0},
-    		{0,0,0,0,0,0,0,0},
-    		{1,0,1,0,1,0,1,0},
-    		{0,1,0,1,0,1,0,1},
-    		{1,0,1,0,1,0,1,0}
-    };
+public class FinalProject {
+	
+	static Scanner input = new Scanner(System.in);
 
     static int mode;
-    static byte[][] board = new byte[8][8];
-    static byte[][][] boardHistory = new byte[4][8][8];
-    static String[] names = new String[2];
-    static int playing = 0;
+    static char[][] board = new char[8][8];
+    static int player = 0;
 
-    static int[][] lastPlay = new int[2][2];
-
+    static boolean huffing;
 
     public static void main(String[] args) throws InterruptedException {
     	
-    	do {
-	        Renderer.renderTitle();
-	        mode = Integer.valueOf(Prompter.promptStart());
-    	}
-    	while (mode<1 || 3<mode);
+    	startScreen();
 
-        Renderer.clear();
-        names = Prompter.promptNames();
-        
-        Renderer.animateCoinFlip();
-        byte coinFlip = randomizeStartingPlayer();
-        Prompter.setNames(names);
-        Prompter.promptPlay(coinFlip, playing);
-        
-        board = STARTING_BOARD.clone();
+        resetBoard();
 
+        drawBoard();
+
+        boolean endGame = false;
+        
+        do {
+        	processTurn();
+        }
+        while (!endGame);
+        
         int endTurnCode;
         do {
 	        Renderer.renderBoard(board);
@@ -104,29 +87,124 @@ public class Main {
     	Prompter.promptEnd(-endTurnCode);
     }
 
+    
+    private static void processTurn() {
+    	boolean endTurn = false;
+    	boolean validChoice = false;
+    	String choice;
+    	do {
+    		do {
+				choice = input.nextLine();
+				int[][] moveList = parseMove(choice);
+				if (moveList.length < 2) { // Not valid
+					continue;
+				}
+				validChoice = processMovement(moveList);
+    		}
+    		while (!validChoice);
+    	}
+    	while (!endTurn);
+	}
 
-    static int move(String moveStr) {
-    	int[][] moves = parseMove(moveStr); // Parse input
-    	int[] pos = moves[0]; // Position starts at first entry
-    	byte piece = pieceAt(pos); // Store type of piece
 
-    	switch (ownerRel(piece, playing)) {
-    	case -1: return -2; // No piece (or out of bounds)
-    	case 1:  return -3; // Not your piece
+	static void nextTurn() { //DONE
+    	if (player=='w') {
+    		player = 'b';
+    	}
+    	else
+    		player = 'w';
+	}
+
+
+	static void drawBoard() { // DONE
+    	System.out.println("    1   2   3   4   5   6   7   8");
+    	System.out.println("  _________________________________");
+    	for (int i = 0; i < board.length; i++) {
+    		System.out.print(i+"|");
+    		for (int j = 0; j < board[i].length; j++) {
+
+        		System.out.print(" "+board[i][j]+" |");
+    		}
+    		System.out.println();
+		}
+	}
+
+
+	static void startScreen() { // DONE
+    	do {
+	        System.out.println("Choose a game mode:\n" +
+				"1) Basic mode\n" +
+				"2) Intermediate mode\n" +
+				"3) Advanced mode");
+	        mode = input.nextInt();
+	        input.nextLine();
+    	}
+    	while (!(1 < mode && mode < 3));
+	}
+
+
+	static void resetBoard() { // DONE
+    	board = new char[][]{
+    		{' ', 'b', ' ', 'b', ' ', 'b', ' ', 'b'},
+    		{'b', ' ', 'b', ' ', 'b', ' ', 'b', ' '},
+    		{' ', 'b', ' ', 'b', ' ', 'b', ' ', 'b'},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    		{'w', ' ', 'w', ' ', 'w', ' ', 'w', ' '},
+    		{' ', 'w', ' ', 'w', ' ', 'w', ' ', 'w'},
+    		{'w', ' ', 'w', ' ', 'w', ' ', 'w', ' '},
+    	};
+    }
+
+
+    static int validateFormat(String line) { // DONE
+    	// return how many moves there are
+    	if (line.length() < 11) { // Not enough characters
+    		return 0; 
     	}
 
-    	int[][] captured = new int[moves.length-1][2]; // Max amount of captures is one per move
-    	int c = 0; // Captured count
+    	int n=0;
+    	while (line.length()-n*6 >= 5) { // There are moves left to check
+    		// Check all characters are correct
+    		if (line.charAt(n*6) != '(' || line.charAt(n*6+1) < '1' || line.charAt(n*6+1) > '8' || line.charAt(n*6+2) != ',' || line.charAt(n*6+3) < '1' || line.charAt(n*6+3) > '8' || line.charAt(n*6+4) != ')') {
+    			return 0;
+    		}
+    		n++;
+    	}
+    	if (line.length()-n*6 > 0) { // Leftover characters? We don't want that
+    		return 0;
+    	}
     	
-    	// Huffing flag
-    	int huff = moveChoiceCount(playing)[1]>0? 1:0;
+    	return n; // There are n pairs of coordinates!
+    }
 
-    	// When moving into an enemy piece, next move must be capture
-    	int condition = 1; // Allow 
+    
+    static int[][] parseMove(String line) { //DONE
+    	int moveCount = validateFormat(line);
+    	int[][] moves = new int[moveCount][2];
 
-    	for (int i = 1; i<moves.length; i++) {
-    		if (condition == 0) { // No more moves
-    			return -4; // Too many moves
+    	for (int i = 0; i<moves.length; i++) {
+    		moves[i][0] = line.charAt(i*6+1)-'1';
+    		moves[i][1] = line.charAt(i*6+3)-'1';
+    	}
+
+    	return moves;
+    }
+
+    static boolean processMovement(int[][] moveList) {
+    	int[] start = moveList[0]; // First entry is the initial position
+
+    	if (playablePiece(start[0], start[1])!=1) {
+    		return false;
+    	}
+    	
+    	//TODO:
+    	//huffing = moveChoiceCount(playing)[1]>0? 1:0;
+
+    	for (int i = 1; i<moveList.length; i++) {
+    		
+    		if (validateOneMovement(moveList[i], moveList[i+1])) {
+    			
     		}
     		
     		int[] move = moves[i];
@@ -135,7 +213,7 @@ public class Main {
     		case 2: // Add the midpoint to the capture list
     			captured[c++] = new int[] {(pos[0]+move[0])/2, (pos[1] + move[1])/2};
     			condition = 1; // Allow next move
-    			huff = 0; // If you just captured, huffing flag is reset
+    			huffing = 0; // If you just captured, huffing flag is reset
     			break;
     		case 5: // Moving into an enemy piece
     			condition = 2; // Next move must be a capture move
@@ -148,7 +226,7 @@ public class Main {
     		}
     		
     		pos = move;
-    		huff = availableMoveCount(pos, piece)[1]>0? 1:huff;
+    		huffing = availableMoveCount(pos, piece)[1]>0? 1:huffing;
     		
 			if(mode>1 && move[0] == (playing==0? 0 : 7)) {
 				piece += 2; // Become king
@@ -158,102 +236,37 @@ public class Main {
     	if (condition == 2) { // Pending capture
     		return -25; // ERR: Occupied. Moved into an enemy piece without capturing it
     	}
-
-    	// Save board history
-    	for (int i=boardHistory.length-1; i>0; i--) {
-    		boardHistory[i] = boardHistory[i-1];
-    	}
-    	boardHistory[0] = new byte[8][8];
-    	for (int row=0; row<board.length; row++) {
-    		boardHistory[0][row] = board[row].clone();
-    	}
-
     	// Changes to the board are only made here, after passing all error checks.
     	for (int i = 0; i<c; i++) {
     		board[captured[i][0]][captured[i][1]] = 0; // Remove captured pieces
     	}
-    	board[moves[0][0]][moves[0][1]] = 0; // Remove piece from original location
-    	board[pos[0]][pos[1]] = piece; // Place piece at final locattion
+    	 = 0; // Remove piece from original location
+    	board[moveList[0]][moveList[1]] = board[moveList[0][0]][moveList[0][1]]; // Place piece at final locattion
 
     	// Update last play
-    	lastPlay = new int[][] {pos,{huff,0}};
+    	lastPlayedPiece = new int[][] {pos,{huff,0}};
 
     	return 0;
     }
 
-    static int huff() {
-    	if (mode < 3) {
-    		return 2; // Not the right gamemode
-    	}
+    
+    static boolean validateOneMovementSimulate(int[] position, int[] movement, char simulationPiece) {
+    	char storedPiece = board[position[0]][position[1]];
+    	board[position[0]][position[1]] = simulationPiece;
+    	boolean isValid = validateOneMovement(position, movement);
+    	board[position[0]][position[1]] = storedPiece;
+    	return isValid;
     	
-    	if (lastPlay[1][0]==1) { // It's a huffing flag that was set during the last move
-    		board[lastPlay[0][0]][lastPlay[0][1]] = 0; // Offending piece removed.
-    		return 1;
-    	}
-    	return 0;
     }
-
-    static boolean checkStall() {
-    	for (int i=3; i<boardHistory.length; i++) {
-    		if (java.util.Arrays.deepEquals(board, boardHistory[i])) {
-    			return true;
-    		}
-    	}
-    	return false;
-    }
-
-    public static int checkWinner() {
-    	int[] choiceCounts = {moveChoiceCount(0)[0], moveChoiceCount(1)[0]};
-    	return choiceCounts[0]==0? 2 : choiceCounts[1]==0? 1 : 0;
-    }
-
-    static byte validateInput(String input) {
-    	if (input.length() < 1) { // No input
-    		return -1;
-    	}
-
-    	switch (input.charAt(0)) {
-    	case '(':
-        	if (Pattern.compile("(\\(\\d,\\s*\\d\\)\\s*){2,}").matcher(input).matches()) {
-        		return 1; // Move
-    		}
-        	break; // It will return -2 at the end if not valid
-    	case 'h':
-    		if (input.equals("help")) { // Also accept "help" instead of "?"
-    			return 8;
-    		} // If it's not "help", fall-through and assume it was huff
-    	case 'H':
-    		return 2;
-    	case 's':
-    	case 'S':
-    		return 3;
-    	case '?':
-    		return 8;
-    	case 'e':
-    	case 'E':
-    		if (input.equalsIgnoreCase("EXIT")) {
-    			return 16;
-    		}
-    	}
-		return -2;
-    }
-
-    static int validateMove(int[] pos, int[] move) {
-		return validateMove(pos, move, pieceAt(pos));
-    }
-    static int validateMove(int[] pos, int[] move, byte piece) {
-		int[] rel = {move[0]-pos[0], move[1]-pos[1]};
-
-		if (ownerRel(pieceAt(pos), ownerOf(piece)) == 1) {
-			return -3; // ERR: Piece is in fact owned by the opponent
+    
+    static boolean validateOneMovement(int[] pos, int[] move) {
+		int[] path = {move[0]-pos[0], move[1]-pos[1]};
+	
+		if ((path[0] != 1 && path[0] != -1) || (path[1] != 1 && path[1] != -1)) {
+			return false;
 		}
-		if (pieceAt(move) == -2 || piece == -2) {
-			return -9; // ERR: Out of bounds
-		}
-		if (Math.abs(rel[0]) != Math.abs(rel[1])) {
-			return -10; // ERR: Movement is not diagonal
-		}
-		if (piece <= 2 && rel[0] * (ownerOf(piece)==0?1:-1) >0) {
+		if (rank(pos[0], pos[1]) == 1) {
+			if (path[j]!=)
 			return -17; // ERR: Backwards movement
 		}
 		
@@ -287,20 +300,33 @@ public class Main {
 		default: // Anything bigger than 2
 			return -12; // ERR: Way too far
 		}
+	}
+
+
+	static boolean huff() {
+    	if (mode < 3) {
+    		return false;
+    	}
+    	
+    	if (lastPlay[1][0]==1) { // It's a huffing flag that was set during the last move
+    		board[lastPlay[0][0]][lastPlay[0][1]] = ' '; // Offending piece removed.
+    		return true;
+    	}
+    	return false;
     }
 
-    static int[][] parseMove(String moveStr) {
-    	Matcher coordsMatcher = Pattern.compile("\\((\\d),\\s*(\\d)\\)").matcher(moveStr);
-
-    	// Count '(' to know how many moves there are
-    	int[][] moves = new int[(int) moveStr.chars().filter(c -> c=='(').count()][2];
-
-    	// Not your usual for loop, but it's fine.
-    	for (int i = 0; coordsMatcher.find(); i++) {
-    		moves[i][0] = Integer.valueOf(coordsMatcher.group(1))-1;
-    		moves[i][1] = Integer.valueOf(coordsMatcher.group(2))-1;
+    static boolean checkStall() {
+    	for (int i=3; i<boardHistory.length; i++) {
+    		if (java.util.Arrays.deepEquals(board, boardHistory[i])) {
+    			return true;
+    		}
     	}
-    	return moves;
+    	return false;
+    }
+
+    public static int checkWinner() {
+    	int[] choiceCounts = {moveChoiceCount(0)[0], moveChoiceCount(1)[0]};
+    	return choiceCounts[0]==0? 2 : choiceCounts[1]==0? 1 : 0;
     }
 
     static int[][][] moveChoices(int player) {
@@ -379,33 +405,46 @@ public class Main {
     	return moveCount;
     }
 
-    public static int ownerRel(byte piece, int player) {
-    	int owner = ownerOf(piece);
-    	return (owner<0 || player==0) ? owner : owner==0?1:0;
-    }
-    public static int ownerOf(byte piece) {
-    	return (piece - 1) % 2;
-    }
-
-    public static byte pieceAt(int[] pos) {
-    	return pieceAt(pos[0], pos[1]);
-    }
-    public static byte pieceAt(int row, int col) {
-    	if (row<0 || board.length<=row || col<0 || board[0].length<=col) {
-    		return -2;
+    public static int playablePiece(int i, int j) { //DONE
+    	switch (board[i][j]) {
+    	case 'w':
+    	case 'W':
+    		if (player=='w') {
+    			return 1;
+    		}
+    		else return -1;
+    	case 'b':
+    	case 'B':
+    		if (player == 'b') {
+    			return 1;
+    		}
+    		else return -1;
+		default:
+			return 0;
     	}
-    	return board[row][col];
     }
 
-    static byte randomizeStartingPlayer() {
-    	byte starter = (byte) (Math.random()*2);
-    	String starterName = names[starter];
-    	names[1] = names[starter==0? 1:0];
-    	names[0] = starterName;
-    	return starter;
+
+    public static int rank(int i, int j) { //DONE
+    	char piece = board[i][j];
+    	if (piece == 'w' || piece == 'b') {
+    		return 1;
+    	}
+    	else if (piece == 'W' || piece == 'B') {
+    		return 2;
+    	}
+    	else return 0;
+    }
+    
+    public static char color(int i, int j) { //DONE
+    	char piece = board[i][j];
+    	if (piece == 'w' || piece == 'W') {
+    		return 'w';
+    	}
+    	else if (piece == 'b' || piece == 'B') {
+    		return 'b';
+    	}
+    	else return ' ';
     }
 
-    public static int opponent() {
-    	return playing==0? 1 : 0;
-    }
 }
