@@ -1,4 +1,4 @@
-package FinalProject;
+package finalProject;
 import java.util.Scanner;
 
 public class FinalProject {
