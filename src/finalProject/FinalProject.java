@@ -92,6 +92,7 @@ public class FinalProject {
 						}
 
 						if(validMovement) {
+							char initialPiece = charsInBoard[coordinates[0]][coordinates[1]]; // We need this so we can check if the piece has become a king or not
 							makeTheMovement(coordinates);
 							if(movement.length()==10) {//If only wants to move , the last 2 coordinates will be the second and third (taking into account that for us the first one is the 0)
 								last2Coordinates[0]=coordinates[2];
@@ -104,6 +105,10 @@ public class FinalProject {
 							if(movement.length()==10) {//If the player has only move the piece but not capture an opponent's piece, his turn ends.
 								nextTurn=true;
 							}
+							if(charsInBoard[last2Coordinates[0]][last2Coordinates[1]] != initialPiece) { // If the piece at the final position is different from the piece at the initial position, that means it has become a king and it can't continue moving.
+								nextTurn=true;
+							}
+							
 						}else if(errorMessage.length()==0){//If there wasn't before an error message or if we hadn't specified why is wrong. It will happen...
 							errorMessage="Not a valid movement. ";
 						}
