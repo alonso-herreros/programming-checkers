@@ -7,7 +7,7 @@ public class FinalProject {
 
 	//The variables that are going to be created as static can be used by any method (function) of this class
 	static char[][] charsInBoard = new char [8][8];
-	static int turn;
+	static int turn; // This is 1 when it's the white player's turn and 2 when it's the black player's turn
 	static int mode;//Depending on the number that the user writes, it will have a different value (1,2 or 3)
 	static int [] last2Coordinates=new int[2];//Static because it is going to be used in different functions of this class (For example in huffing and main)
 	//Creation of a new method that is going to populate charsInBoard following the rules given.
@@ -37,7 +37,7 @@ public class FinalProject {
 		initializeCharsOfBoard(); //First because we can't draw the board if we don't have the values
 		start();
 		selectMode();
-		turn = 1;
+		turn = 2; // Black pieces start!
 		int thereIsAWinner=0;//It starts from 0 as at first there is no winner.If its final value is 1, means that the white pieces have won, and if its
 		//final value is 2, it means that the black pieces have won.
 		String errorMessage="";//Empty because at first we don't want to say the player that they (he/she) have done something wrong without being true.
@@ -69,7 +69,7 @@ public class FinalProject {
 						System.out.println(errorMessage);
 						errorMessage=""; //Because we don't want to show any error message the next time, it has to be empty again	
 					}
-					if(hasMadeAMovement==true) { // If the player has made a movement and we are here again, that means he made a capture movement, and we will tell them how to continue.
+					if(hasMadeAMovement==true) { // If the player has made a movement and we are here again, that means they made a capture movement, and we will tell them how to continue.
 						System.out.println("After capturing a piece, you may capture another piece. If you can't, end your turn by pressing Enter.");
 					}
 					
@@ -137,19 +137,19 @@ public class FinalProject {
 					//that can capture but the movement is not for capturing , it's not valid.
 
 				}
-				while (!(validMovement)&&(nextTurn==false)); //If not valid and don't want to end the turn , enters again the do part ,ask for another new movement until it's valid
+				while (!(validMovement)&&(nextTurn==false)); //If not valid and don't want to end the turn, enters again the do part, ask for another new movement until it's valid or the turn ends
 				//If it's valid or nextTurn is true, exits while
-
 			}
 			while (nextTurn==false);
 			if(turn==1) {
 				turn=2;
-			}else if(turn==2) {
+			}else { // We don't need to check turn==2 because it's the only other option
 				turn=1;
 			}
 
 		}while(thereIsAWinner==0);//The loop will be repeated while thereIsAWinner is 0, which means while there is no winner.
 	}
+
 	public static void drawBoard() {
 		System.out.println("     1     2     3     4     5     6     7     8  ");
 		System.out.println("   _______________________________________________");
