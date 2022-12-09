@@ -22,7 +22,7 @@ public class FinalProject {
 				}
 				else {
 					if (i<=2) {
-						charsInBoard[i][j]='b'; //Because the first 3 rows are going to contain the b pieces
+						charsInBoard[i][j]=' '; //Because the first 3 rows are going to contain the b pieces
 					}else if (i>=5){
 						charsInBoard[i][j]='w'; //Because the last 3 rows are going to contain the w pieces
 					}else
@@ -31,6 +31,7 @@ public class FinalProject {
 				}
 			}
 		}
+		charsInBoard[3][2] = 'b';
 	}
 
 	public static void main(String args[]) {
@@ -51,6 +52,7 @@ public class FinalProject {
 
 			thereIsAWinner = checkWinner(); //ThereIsAWinner variable can only have as values 0,1 or 2 , with the same conditions as checkWinner function, that's why they have the same value.
 			if(!(thereIsAWinner==0)) {
+				drawBoard();
 				if(thereIsAWinner==1) {
 					System.out.println("WHITE'S PIECES WIN!!!!!!");
 				}else {
@@ -82,7 +84,7 @@ public class FinalProject {
 							}
 							if(movement.length()==10){
 								validMovement=false;
-								errorMessage = "If you can keep capturing you MUST do it. If not, end your turn (press enter) ";
+								errorMessage = "If you can keep capturing you MUST do it. If not, end your turn (press enter). ";
 							}
 						}
 
@@ -100,13 +102,15 @@ public class FinalProject {
 								nextTurn=true;
 							}
 						}else if(errorMessage.length()==0){//If there wasn't before an error message or if we hadn't specified why is wrong. It will happen...
-							errorMessage="Not a valid movement ";
+							errorMessage="Not a valid movement. ";
 						}
 					}else {
-						if ((movement.equalsIgnoreCase("Huffing"))&&(hasMadeAMovement=false)) { //If the player has written huffing without doing before any movement
-							huffing();
+						if ((mode==3)&&(movement.equalsIgnoreCase("Huffing"))&&(hasMadeAMovement==false)) { //If the player has written huffing without doing before any movement
 							if(huffing()==true) {
 								charsInBoard[last2Coordinates[0]][last2Coordinates[1]]=' ';//If there is huffing, the piece that was moved in the last turn (whose current position is the last coordinates given in the previous turn(which has been the last one because the current player first said 'huffing' instead of moving ) is now eliminated, so its value is empty
+							}
+							else {
+								errorMessage = "The opponent's move was correct. ";
 							}
 						}else if((endOfTurn(movement)==true)&&(hasMadeAMovement==true)){
 							nextTurn=true;//to enter in the if, endOfTurn must be true (and hasMadeAMovement is true), so nextTurn is also true.
@@ -162,7 +166,7 @@ public class FinalProject {
 
 	public static void start() {
 		// Until enter is pressed the game has not started
-		System.out.println("Please enter to start");
+		System.out.print("Please enter to start");
 
 		input.nextLine();
 
@@ -193,7 +197,11 @@ public class FinalProject {
 		}else {
 			System.out.println("It's the black player's turn. ");
 		}
-		System.out.println("Make your movement ! \n Remember to do it in this form (row1,col1)(row2,col2).If you want to huff , write: huffing "); //(row1,col1) is the initial position of the piece and
+		System.out.print("Make your movement! \nRemember to do it in this form (row1,col1)(row2,col2). ");
+		if (mode==3) {
+			System.out.print("If you want to huff , write: huffing "); //(row1,col1) is the initial position of the piece and
+		}
+		System.out.println();
 		//(row2,col2) is the final position of the piece.
 		String movement = input.nextLine(); //Read the movement of the player
 		return movement; //Return the movement to the main method, that will then be stored in the variable called movement of the main method
@@ -233,7 +241,7 @@ public class FinalProject {
 
 		for(int p=0;p<coordinates.length;p++) {
 			//Look for the 6 numbers that form the coordinates.If all of them are between 0 and 7 it will continue checking the rest of the conditions. If not, it will return false, so that movement is not valid in the board
-			if((coordinates[p]<0)||(coordinates[p]>7))  {
+			if((coordinates[p]<0)||(coordinates[p]>7))  { //TODO: fix this
 				return false;
 			}
 		}
@@ -370,14 +378,14 @@ public class FinalProject {
 		//To check if the previous player could have moved a piece, we have to come back to their turn in order to check their validity of their movement
 		if(turn==1) {
 			turn=2;
-		}else if(turn==2) {
+		}else {
 			turn=1;
 		}
 		if((movementOfCapture==true)&&(canCapture(last2Coordinates[0],last2Coordinates[1])==true)) {
 			//Change again the turn to the player who has to move next . (Because the first change of player has been done before in order to check if their movement was valid or not).
 			if(turn==1) {
 				turn=2;
-			}else if(turn==2) {
+			}else {
 				turn=1;
 			}
 			return true;
@@ -389,7 +397,7 @@ public class FinalProject {
 						//Change again the turn to the player who has to move next . (Because the first change of player has been done before in order to check if their movement was valid or not).
 						if(turn==1) {
 							turn=2;
-						}else if(turn==2) {
+						}else {
 							turn=1;
 						}
 						return true;
@@ -401,7 +409,7 @@ public class FinalProject {
 		//Change again the turn to the player who has to move next . (Because the first change of player has been done before in order to check if their movement was valid or not).
 		if(turn==1) {
 			turn=2;
-		}else if(turn==2) {
+		}else {
 			turn=1;
 		}
 		return false; //If it doesn't check any of the previous conditions, it's not huffing.
@@ -410,7 +418,6 @@ public class FinalProject {
 	}
 	public static boolean canCapture(int i,int j) {
 		int[][] possibleCoordinatesForCapture= {
-
 				{i,j,i+1,j+1,i+2,j+2},
 				{i,j,i-1,j-1,i-2,j-2},
 				{i,j,i+1,j-1,i+2,j-2},
