@@ -22,7 +22,7 @@ public class FinalProject {
 				}
 				else {
 					if (i<=2) {
-						charsInBoard[i][j]=' '; //Because the first 3 rows are going to contain the b pieces
+						charsInBoard[i][j]='b'; //Because the first 3 rows are going to contain the b pieces
 					}else if (i>=5){
 						charsInBoard[i][j]='w'; //Because the last 3 rows are going to contain the w pieces
 					}else
@@ -31,7 +31,6 @@ public class FinalProject {
 				}
 			}
 		}
-		charsInBoard[3][2] = 'b';
 	}
 
 	public static void main(String args[]) {
@@ -44,7 +43,6 @@ public class FinalProject {
 		String errorMessage="";//Empty because at first we don't want to say the player that they (he/she) have done something wrong without being true.
 		do {//Repeats turns until there is a winner
 			boolean nextTurn=false;
-
 			boolean hasMadeAMovement=false;
 			String movement; //Ask for a movement
 			boolean validMovement;//Check if it's valid
@@ -67,33 +65,38 @@ public class FinalProject {
 				do {//Until there is a valid movement or the player ends the turn.
 
 					drawBoard(); //For each movement , the board is updated, it is going to show that new movement.
-					System.out.print(errorMessage); //Because we don't want to show any error message, it has to be empty
-					errorMessage="";
-
+					if (errorMessage.length()!=0) { // If there is an error message that we stored
+						System.out.println(errorMessage);
+						errorMessage=""; //Because we don't want to show any error message the next time, it has to be empty again	
+					}
+					if(hasMadeAMovement==true) { // If the player has made a movement and we are here again, that means he made a capture movement, and we will tell them how to continue.
+						System.out.println("After capturing a piece, you may capture another piece. If you can't, end your turn by pressing Enter.");
+					}
+					
 					movement = askForMovement(); //askForMovement asks for a movement and return that movement. That's why movement = askForMovement.
 					validMovement = checkFormatOfMovement(movement);//checkFormatOfMovement checks if that movement is valid and the result is stored in the validMovement variable.
 
-					if ((validMovement)) { //If not valid movement, goes to while and as it 's still not valid, a new movement will be asked.
+					if (validMovement) { //If not valid movement, goes to while and as it's still not valid, a new movement will be asked.If it's valid , it will enter in the if.
 						coordinates=interpretationOfStringMovementAsNumbers(movement); //coordinates is going to hold the position and the movement as numbers.This conversion has been done in the interpretationOfStringMovementAsNumbers function
 						validMovement=validMovementInTheBoard(coordinates);//If the coordinates given by the player are also valid in the board, the result of if it's valid or not is stored in the validMovement variable
 
 						if(hasMadeAMovement==true) {
-							if((coordinates[0]!=last2Coordinates[0])||(coordinates[1]!=last2Coordinates[1])) {
+							if((coordinates[0]!=last2Coordinates[0])||(coordinates[1]!=last2Coordinates[1])) {//If it's not moved the same piece because wanted to not end its turn but must happens...
 								validMovement=false;
 								errorMessage = "You can't move a different piece!!!! ";
 							}
-							if(movement.length()==10){
+							if(movement.length()==10){//If the movement length is not 15 (want to capture) but wants to keep playing, the turn must end, they can't continue playing
 								validMovement=false;
-								errorMessage = "If you can keep capturing you MUST do it. If not, end your turn (press enter). ";
+								errorMessage = "If you can keep capturing you MUST do it. If not, end your turn (press enter) ";
 							}
 						}
 
 						if(validMovement) {
 							makeTheMovement(coordinates);
-							if(movement.length()==10) {
+							if(movement.length()==10) {//If only wants to move , the last 2 coordinates will be the second and third (taking into account that for us the first one is the 0)
 								last2Coordinates[0]=coordinates[2];
 								last2Coordinates[1]=coordinates[3];
-							}else {
+							}else {//If wants to capture, the last 2 coordinates, will be the fourth and fifth
 								last2Coordinates[0]=coordinates[4];
 								last2Coordinates[1]=coordinates[5];
 							}
@@ -105,11 +108,12 @@ public class FinalProject {
 							errorMessage="Not a valid movement. ";
 						}
 					}else {
-						if ((mode==3)&&(movement.equalsIgnoreCase("Huffing"))&&(hasMadeAMovement==false)) { //If the player has written huffing without doing before any movement
+						if ((mode==3)&&(movement.equalsIgnoreCase("Huffing"))&&(hasMadeAMovement==false)) { //If the player has written huffing without doing before any movement , the function huffing is checked
 							if(huffing()==true) {
-								charsInBoard[last2Coordinates[0]][last2Coordinates[1]]=' ';//If there is huffing, the piece that was moved in the last turn (whose current position is the last coordinates given in the previous turn(which has been the last one because the current player first said 'huffing' instead of moving ) is now eliminated, so its value is empty
+								charsInBoard[last2Coordinates[0]][last2Coordinates[1]]=' ';//If there is huffing, the piece that was moved in the last turn (whose current position is the last coordinates given in the previous turn(which has been the last one because the current player first said 'huffing' instead of moving )) is now eliminated, so its value is empty
+								// In this special case we will not do anything about validMovement because we need to ask the player again what is their move
 							}
-							else {
+							else {//If it's not true (there is no huffing)
 								errorMessage = "The opponent's move was correct. ";
 							}
 						}else if((endOfTurn(movement)==true)&&(hasMadeAMovement==true)){
@@ -124,10 +128,12 @@ public class FinalProject {
 					//is valid or not, and it is stored in the variable validMovement, which is a boolean because we declared it before the loop and it's going to say if that
 					//movement is valid or not.If valid movement, it is going to be converted into coordinates, thanks to the function interpretationOfStringMovementAsNumbers.
 					//That coordinates are going to be checked if they represent a movement that is legal. If not a valid movement, it's check if the player doesn't want to
-					//make a turn or if it's not valid.
+					//make a turn or if it's not valid.If it's still their turn because maybe they can keep capturing, if it's not moved the same piece , it can't be done or if there is a piece
+					//that can capture but the movement is not for capturing , it's not valid.
+
 				}
-				while (!(validMovement)&&(nextTurn==false)); //If not valid , enters again the do part ,ask for another new movement until it's valid
-				//If it's valid, exits while
+				while (!(validMovement)&&(nextTurn==false)); //If not valid and don't want to end the turn , enters again the do part ,ask for another new movement until it's valid
+				//If it's valid or nextTurn is true, exits while
 
 			}
 			while (nextTurn==false);
@@ -149,7 +155,7 @@ public class FinalProject {
 
 			System.out.print(i+1 + " |"); //Print line number and the first |
 
-			//System.out.println(" |    | b  |    | b  |    | b  |    | b  |");
+			//System.out.println("  |     |  b  |     |  b  |     |  b  |     |  b  |");
 			//We are going to create a for so everything is going to be repeated but it will
 			//have a different letter(b or w) depending on each case.
 
@@ -166,7 +172,7 @@ public class FinalProject {
 
 	public static void start() {
 		// Until enter is pressed the game has not started
-		System.out.print("Please enter to start");
+		System.out.println("Please enter to start");
 
 		input.nextLine();
 
@@ -193,16 +199,16 @@ public class FinalProject {
 	}
 	public static String askForMovement() {
 		if (turn==1) {
-			System.out.println("It's the white player's turn. ");
+			System.out.print("It's the white player's turn. ");
 		}else {
-			System.out.println("It's the black player's turn. ");
+			System.out.print("It's the black player's turn. ");
 		}
-		System.out.print("Make your movement! \nRemember to do it in this form (row1,col1)(row2,col2). ");
-		if (mode==3) {
-			System.out.print("If you want to huff , write: huffing "); //(row1,col1) is the initial position of the piece and
+		System.out.println("Make your movement!");
+		System.out.print("Remember to do it in this form (row1,col1)(row2,col2). ");//(row1,col1) is the initial position of the piece and and (row2,col2) the last one
+		if(mode==3) {
+			System.out.print("If you want to huff, write: huffing ");
 		}
 		System.out.println();
-		//(row2,col2) is the final position of the piece.
 		String movement = input.nextLine(); //Read the movement of the player
 		return movement; //Return the movement to the main method, that will then be stored in the variable called movement of the main method
 	}
@@ -217,7 +223,7 @@ public class FinalProject {
 			return false; //If the user only writes 2 coordinates or more than 6
 		}
 
-		for (int i=0;i<repetitions;i++) {
+		for (int i=0;i<repetitions;i++) {//How the movement must be written and the range between those coordinates must be
 			if (!(movement.charAt(i*5)=='(' && movement.charAt(i*5+1)>='1'&& movement.charAt(i*5+1)<='8' && movement.charAt(i*5+2)==','
 					&& movement.charAt(i*5+3)>='1' && movement.charAt(i*5+3)<='8'&& movement.charAt(i*5+4)==')')) {
 				return false;
@@ -230,25 +236,27 @@ public class FinalProject {
 
 	public static boolean validMovementInTheBoard(int [] coordinates){
 		//Inside the function we need to check the movement given by the user,which is at the main function so that's why is inside the(),because we need that movement declared in the main function.
-		//But now as it depends on the coordinates , which are now declared in the main function, where we have also made the conversion form movement into coordinates, now it depends on the value of the coordinates, and not the movement
+		//But now as it depends on the coordinates , which are now declared in the main function, where we have also made the conversion from movement into coordinates, now it depends on the value of the coordinates, and not the movement
 		//int[] coordinates = new int[6]; //6 because we need 6 coordinates.
 		//coordinates=interpretationOfStringMovementAsNumbers(movement); //coordinates is going to hold the position and the movement as numbers.This conversion has been done in the interpretationOfStringMovementAsNumbers function
 
 
 		int[] relative = new int [2];
+		//If for example the movement is (2,3)(3,4) , relative [0] represents 3-2 and relative[1] represents 4-3.
+
 		relative [0] = coordinates [2] - coordinates [0]; //i
 		relative [1] = coordinates [3] - coordinates [1]; //j
 
 		for(int p=0;p<coordinates.length;p++) {
-			//Look for the 6 numbers that form the coordinates.If all of them are between 0 and 7 it will continue checking the rest of the conditions. If not, it will return false, so that movement is not valid in the board
-			if((coordinates[p]<0)||(coordinates[p]>7))  { //TODO: fix this
+			//Look for the 6 numbers that form the coordinates. If all of them are between 0 and 7 it will continue checking the rest of the conditions. If not, it will return false, so that movement is not valid in the board
+			if((coordinates[p]<0)||(coordinates[p]>7)) {
 				return false;
 			}
 		}
 		if (whosePiece(coordinates[0],coordinates[1])!=1){ //If it's not the piece of the player who is playing it will return false
 			return false ;
 		}
-		if ((Math.abs(relative[0])!=1)||(Math.abs(relative[1])!=1)){
+		if ((Math.abs(relative[0])!=1)||(Math.abs(relative[1])!=1)){//The absolute value of the relatives must be 1 (meaning the value is 1 or -1) as the piece can only be moved 1 cell diagonally
 			return false;
 		}
 		if((charsInBoard[coordinates[0]][coordinates[1]]=='b')&&(relative[0]<1)) {
@@ -261,8 +269,12 @@ public class FinalProject {
 		if (whosePiece(coordinates[2],coordinates[3])==1) { //The player can't move the piece into a position where there is already another piece of the same player
 			return false;
 		}
-		if (whosePiece(coordinates[2],coordinates[3])==2) {
+		if (whosePiece(coordinates[2],coordinates[3])==2) { //If it's an opponent's piece
 			if (!((whosePiece(coordinates[4],coordinates[5])==0)&&(coordinates[0]+2*relative[0]==coordinates[4])&&(coordinates[1]+2*relative[1]==coordinates[5]))){
+				//This means that if the position formed by the coordinates 4 and 5 is empty, there is going to be a capture's movement.If this happens , the sum of the first coordinate of
+				//the movement and 2 times the result of the relative[0] coordinate (coordinate[2]) - the first(coordinate[0]) has to be the same number as the coordinate [4].
+				//And also, the sum of the coordinate[1] and 2 times the relative[1] (coordinate[1] - coordinate[3]) has to be the same number as the coordinate[5].
+				//If it's not fulfilled one of them it will return false
 				return false;
 			}
 
@@ -279,7 +291,7 @@ public class FinalProject {
 		interpretation[1]=Integer.valueOf(movement.charAt(3)-'1');
 		interpretation[2]=Integer.valueOf(movement.charAt(6)-'1');
 		interpretation[3]=Integer.valueOf(movement.charAt(8)-'1');
-		if (movement.length()>10) {
+		if (movement.length()>10) {//Means there is gonna to be a capture of a piece so the length of the movement has to be 15.
 			interpretation[4]=Integer.valueOf(movement.charAt(11)-'1');
 			interpretation[5]=Integer.valueOf(movement.charAt(13)-'1');
 		}
@@ -307,7 +319,7 @@ public class FinalProject {
 
 	public static void makeTheMovement(int [] coordinates) {
 		if (whosePiece(coordinates[2],coordinates[3])==2) { //This means that the player is going to capture an opponent's piece
-			charsInBoard[coordinates[2]][coordinates[3]]=' '; //The position where there was the opponent's piece is not empty (because the player has capture that piece)
+			charsInBoard[coordinates[2]][coordinates[3]]=' '; //The position where there was the opponent's piece is now empty (because the player has capture that piece)
 			charsInBoard[coordinates[4]][coordinates[5]]=charsInBoard[coordinates[0]][coordinates[1]]; //In the final position of the piece that has captured the opponent's piece, there must appear the piece which was at the initial position before capturing the opponent's piece
 			movementOfCapture=true;//If it's a movement in which the player captures an opponent's piece, it has been made a movement of capture so its value is true
 			if (mode>1) {//Because if mode is 1 the pieces are not converted into kings
@@ -327,9 +339,9 @@ public class FinalProject {
 	}
 	public static void kingPiece(int i,int j) {
 		//Check if the piece has to be converted into a king piece and then it converts it.
-		if ((charsInBoard[i][j]=='b')&&(i==7)){
+		if ((charsInBoard[i][j]=='b')&&(i==7)){//When any black piece reaches the row 7 in the board
 			charsInBoard[i][j]='B';
-		}else if ((charsInBoard[i][j]=='w')&&(i==0)) {
+		}else if ((charsInBoard[i][j]=='w')&&(i==0)) {//When any white piece reaches the row 0 in the board
 			charsInBoard[i][j]='W';
 		}
 	}
@@ -344,7 +356,8 @@ public class FinalProject {
 		boolean winsBlackPieces=true;
 		boolean winsWhitePieces=true;
 
-		if(turn==1) {
+		if(turn==1) { // A player can only lose at the beginning of their own turn (mabye they can't move but they can after the other player's move).
+			// This also means you can't win until your turn is over.
 			winsWhitePieces = false;
 		}else {
 			winsBlackPieces = false;
@@ -354,10 +367,10 @@ public class FinalProject {
 			for(int j=0;j<charsInBoard[i].length;j++) {
 				if((canCapture(i,j)==true)||(canMove(i,j)==true)) {
 					if((charsInBoard[i][j]=='b')||(charsInBoard[i][j]=='B')) {
-						winsWhitePieces = false;
+						winsWhitePieces = false;//Because one of the black pieces can move. If a piece can be moved, means they can continue playing so there is not a winner.
 
 					}else {
-						winsBlackPieces = false;
+						winsBlackPieces = false;//If it's the turn of the white pieces, and one of them can move, the black pieces can't have won
 					}
 				}
 
@@ -373,14 +386,12 @@ public class FinalProject {
 		}
 	}
 	public static boolean huffing() {
-		//Ha utilizado una pieza para comer y ha pasado de turno pero podría haber seguido comiendo
-		//Podria haber utilizado otra pieza para comer pero no ha comido
 		//To check if the previous player could have moved a piece, we have to come back to their turn in order to check their validity of their movement
 		if(turn==1) {
 			turn=2;
 		}else {
 			turn=1;
-		}
+		}//If the player has used a piece to capture and has end its turn when he/she could have captured another opponent's piece again
 		if((movementOfCapture==true)&&(canCapture(last2Coordinates[0],last2Coordinates[1])==true)) {
 			//Change again the turn to the player who has to move next . (Because the first change of player has been done before in order to check if their movement was valid or not).
 			if(turn==1) {
@@ -389,11 +400,11 @@ public class FinalProject {
 				turn=1;
 			}
 			return true;
-		}else if(movementOfCapture==false){
+
+		}else if(movementOfCapture==false){//If the player has not made a movement to capture an opponent's piece
 			for(int i=0;i<charsInBoard.length;i++) {
 				for(int j=0;j<charsInBoard[i].length;j++) {
-
-					if((whosePiece(i,j)==1)&&(canCapture(i,j)==true)) {
+					if((whosePiece(i,j)==1)&&(canCapture(i,j)==true)) {//If it's the turn of a player and its piece can capture but hasn't made a movement to capture, there is huffing so it will return true
 						//Change again the turn to the player who has to move next . (Because the first change of player has been done before in order to check if their movement was valid or not).
 						if(turn==1) {
 							turn=2;
@@ -418,6 +429,7 @@ public class FinalProject {
 	}
 	public static boolean canCapture(int i,int j) {
 		int[][] possibleCoordinatesForCapture= {
+				//If the player can capture , the second and last position could only have those 4 possible values
 				{i,j,i+1,j+1,i+2,j+2},
 				{i,j,i-1,j-1,i-2,j-2},
 				{i,j,i+1,j-1,i+2,j-2},
@@ -433,6 +445,7 @@ public class FinalProject {
 	}
 	public static boolean canMove(int i,int j) {
 		int[][] possibleCoordinatesForMovement= {
+				//If the player can move , the third position is 0,0 as it's not a capture movement
 				{i,j,i+1,j+1,0,0},
 				{i,j,i-1,j-1,0,0},
 				{i,j,i+1,j-1,0,0},
